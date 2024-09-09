@@ -1,4 +1,5 @@
 using System;
+using Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,7 +13,7 @@ public class PlayerMovement : MonoBehaviour
     Rigidbody rb;
     Camera playerCam;
     bool isIdle = true,
-        isAiming = false;
+        isAiming = true;
 
     [Header("Raycast Data")]
     Ray aimRay;
@@ -24,6 +25,15 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField]
     private GameObject playerMesh;
+
+    [Header("Cam Move Values")]
+    CinemachineVirtualCamera vCam;
+    float _rotationX = 0f;
+    float _rotationY = 0f;
+    Vector3 _currentRotation;
+    Vector3 _smoothVelocity = Vector3.zero;
+    float _smoothTime = 0.2f;
+    Vector2 _rotationXMinMax = new Vector2(-40, 40);
 
     #endregion
 
@@ -76,14 +86,14 @@ public class PlayerMovement : MonoBehaviour
     {
         playerInput.Enable();
 
-        playerInput.OnFoot.MousePosition.performed += OnMouseMove;
+        // playerInput.OnFoot.MousePosition.performed += OnMouseMove;
         playerInput.OnFoot.Aim.started += OnAimStart;
         playerInput.OnFoot.Aim.canceled += OnAimStop;
     }
 
     private void OnDisable()
     {
-        playerInput.OnFoot.MousePosition.performed -= OnMouseMove;
+        // playerInput.OnFoot.MousePosition.performed -= OnMouseMove;
         playerInput.OnFoot.Aim.started -= OnAimStart;
         playerInput.OnFoot.Aim.canceled -= OnAimStop;
 
@@ -94,34 +104,31 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if (isAiming)
-        {
-            // aimRay = playerCam.ScreenPointToRay(Mouse.current.position.ReadValue());
+        Vector3 localForward = Camera.main.transform.localRotation * Vector3.forward;
 
-            if (player.GetPointerHit)
-            {
-                Vector3 lookTowards = new Vector3(
-                    player.GetOutHit.point.x - playerMesh.transform.position.x,
-                    0,
-                    player.GetOutHit.point.z - playerMesh.transform.position.z
-                );
+        localForward.y = 0;
+        localForward.Normalize();
 
-                playerMesh.transform.rotation = Quaternion.Slerp(
-                    playerMesh.transform.rotation,
-                    Quaternion.LookRotation(lookTowards),
-                    15 * Time.deltaTime
-                );
-            }
-        }
-        else
-        {
-            if (!isIdle)
-                playerMesh.transform.rotation = Quaternion.Slerp(
-                    playerMesh.transform.rotation,
-                    Quaternion.LookRotation(moveInput),
-                    15 * Time.deltaTime
-                );
-        }
+        Quaternion targetRotation = Quaternion.LookRotation(localForward);
+
+        playerMesh.transform.rotation = targetRotation;
+
+        // --- OLD CODE ---
+        // if (isAiming)
+        // {
+        //     Vector3 lookToward = new Vector3(camTransform.forward.x, 0, camTransform.forward.z);
+
+        //     playerMesh.transform.LookAt(playerMesh.transform.position + lookToward);
+        // }
+        // else
+        // {
+        //     if (!isIdle)
+        //         playerMesh.transform.rotation = Quaternion.Slerp(
+        //             playerMesh.transform.rotation,
+        //             Quaternion.LookRotation(moveInput),
+        //             15 * Time.deltaTime
+        //         );
+        // }
     }
 
     void FixedUpdate()
@@ -131,21 +138,35 @@ public class PlayerMovement : MonoBehaviour
 
         #region Animation Movement When Aiming - Fixed Update
 
-        if (isAiming)
+        // --- OLD CODE ---
+        // if (isAiming)
+        // {
+        //     if (camTransform != null)
+        //     {
+        //         camForward = Vector3.Scale(camTransform.up, new Vector3(1, 0, 1)).normalized;
+        //         move = moveInput.z * camForward + moveInput.x * camTransform.right;
+        //     }
+        //     else
+        //         move = moveInput.z * Vector3.forward + moveInput.x * Vector3.right;
+
+        //     if (move.magnitude > 1)
+        //         move.Normalize();
+
+        //     Move(move);
+        // }
+
+        if (camTransform != null)
         {
-            if (camTransform != null)
-            {
-                camForward = Vector3.Scale(camTransform.up, new Vector3(1, 0, 1)).normalized;
-                move = moveInput.z * camForward + moveInput.x * camTransform.right;
-            }
-            else
-                move = moveInput.z * Vector3.forward + moveInput.x * Vector3.right;
-
-            if (move.magnitude > 1)
-                move.Normalize();
-
-            Move(move);
+            camForward = Vector3.Scale(camTransform.up, new Vector3(1, 0, 1)).normalized;
+            move = moveInput.z * camForward + moveInput.x * camTransform.right;
         }
+        else
+            move = moveInput.z * Vector3.forward + moveInput.x * Vector3.right;
+
+        if (move.magnitude > 1)
+            move.Normalize();
+
+        Move(move);
 
         #endregion
 
@@ -182,7 +203,4 @@ public class PlayerMovement : MonoBehaviour
     private void OnAimStart(InputAction.CallbackContext ctx) => isAiming = true;
 
     private void OnAimStop(InputAction.CallbackContext ctx) => isAiming = false;
-
-    private void OnMouseMove(InputAction.CallbackContext ctx) =>
-        mousePos = playerCam.ScreenToWorldPoint(ctx.ReadValue<Vector2>());
 }

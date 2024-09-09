@@ -1,3 +1,4 @@
+using fLibrary;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -25,6 +26,11 @@ public class PlayerCharacter : MonoBehaviour
     [SerializeField]
     GameObject pauseMenu;
 
+    [Header("Equiped Weapon")]
+    private WeaponType equipedWeaponType = WeaponType.Bow; // Using Default value for initialisation.
+    GameObject equipedWeaponObj;
+    WeaponSystem weaponSystem;
+
     #endregion
 
     #region Weapon Data
@@ -37,6 +43,11 @@ public class PlayerCharacter : MonoBehaviour
     public PlayerInputActions GetInputActions
     {
         get { return playerInput; }
+    }
+
+    public WeaponType GetWeaponType
+    {
+        get { return equipedWeaponType; }
     }
 
     public string SetInteractMsg
@@ -99,11 +110,9 @@ public class PlayerCharacter : MonoBehaviour
 
     private void Update()
     {
-        pointerRay = playerCam.ScreenPointToRay(Mouse.current.position.ReadValue());
+        // Physics.Raycast();
 
-        didPointerHit = Physics.Raycast(pointerRay, out hit);
-
-        HandleInteraction();
+        // HandleInteraction();
     }
 
     private void HandleInteraction()
@@ -129,6 +138,8 @@ public class PlayerCharacter : MonoBehaviour
         playerInput = new PlayerInputActions();
         playerCam = Camera.main;
         playerMovement = GetComponent<PlayerMovement>();
+
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     #endregion
