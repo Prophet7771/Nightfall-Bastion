@@ -15,6 +15,15 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "MoveCamera",
+                    "type": "PassThrough",
+                    "id": "1df86181-f367-4fd9-9d77-e7effa8eac16",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Movement",
                     "type": "Value",
                     "id": "c1cf92b1-3031-4714-94c8-275244a0d712",
@@ -188,6 +197,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "InventorySystem",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cce98f65-c0d9-4c12-9961-1f15262a1380",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MoveCamera",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

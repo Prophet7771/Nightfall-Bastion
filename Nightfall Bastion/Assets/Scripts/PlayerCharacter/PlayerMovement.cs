@@ -27,13 +27,7 @@ public class PlayerMovement : MonoBehaviour
     private GameObject playerMesh;
 
     [Header("Cam Move Values")]
-    CinemachineVirtualCamera vCam;
-    float _rotationX = 0f;
-    float _rotationY = 0f;
-    Vector3 _currentRotation;
-    Vector3 _smoothVelocity = Vector3.zero;
-    float _smoothTime = 0.2f;
-    Vector2 _rotationXMinMax = new Vector2(-40, 40);
+    float camSpeed = 2f;
 
     #endregion
 
@@ -78,6 +72,7 @@ public class PlayerMovement : MonoBehaviour
         playerCam = Camera.main;
 
         camTransform = playerCam.transform;
+        // camTransform = transform;
     }
 
     #region Event Handlers
@@ -86,14 +81,14 @@ public class PlayerMovement : MonoBehaviour
     {
         playerInput.Enable();
 
-        // playerInput.OnFoot.MousePosition.performed += OnMouseMove;
+        playerInput.OnFoot.MoveCamera.performed += MoveCam;
         playerInput.OnFoot.Aim.started += OnAimStart;
         playerInput.OnFoot.Aim.canceled += OnAimStop;
     }
 
     private void OnDisable()
     {
-        // playerInput.OnFoot.MousePosition.performed -= OnMouseMove;
+        playerInput.OnFoot.MoveCamera.performed -= MoveCam;
         playerInput.OnFoot.Aim.started -= OnAimStart;
         playerInput.OnFoot.Aim.canceled -= OnAimStop;
 
@@ -113,22 +108,11 @@ public class PlayerMovement : MonoBehaviour
 
         playerMesh.transform.rotation = targetRotation;
 
-        // --- OLD CODE ---
-        // if (isAiming)
-        // {
-        //     Vector3 lookToward = new Vector3(camTransform.forward.x, 0, camTransform.forward.z);
+        playerCam.transform.LookAt(playerCam.transform.parent);
 
-        //     playerMesh.transform.LookAt(playerMesh.transform.position + lookToward);
-        // }
-        // else
-        // {
-        //     if (!isIdle)
-        //         playerMesh.transform.rotation = Quaternion.Slerp(
-        //             playerMesh.transform.rotation,
-        //             Quaternion.LookRotation(moveInput),
-        //             15 * Time.deltaTime
-        //         );
-        // }
+        Vector3 lookToward = new Vector3(camTransform.forward.x, 0, camTransform.forward.z);
+
+        playerMesh.transform.LookAt(playerMesh.transform.position + lookToward);
     }
 
     void FixedUpdate()
@@ -138,26 +122,9 @@ public class PlayerMovement : MonoBehaviour
 
         #region Animation Movement When Aiming - Fixed Update
 
-        // --- OLD CODE ---
-        // if (isAiming)
-        // {
-        //     if (camTransform != null)
-        //     {
-        //         camForward = Vector3.Scale(camTransform.up, new Vector3(1, 0, 1)).normalized;
-        //         move = moveInput.z * camForward + moveInput.x * camTransform.right;
-        //     }
-        //     else
-        //         move = moveInput.z * Vector3.forward + moveInput.x * Vector3.right;
-
-        //     if (move.magnitude > 1)
-        //         move.Normalize();
-
-        //     Move(move);
-        // }
-
         if (camTransform != null)
         {
-            camForward = Vector3.Scale(camTransform.up, new Vector3(1, 0, 1)).normalized;
+            camForward = Vector3.Scale(camTransform.forward, new Vector3(1, 0, 1)).normalized;
             move = moveInput.z * camForward + moveInput.x * camTransform.right;
         }
         else
@@ -203,4 +170,22 @@ public class PlayerMovement : MonoBehaviour
     private void OnAimStart(InputAction.CallbackContext ctx) => isAiming = true;
 
     private void OnAimStop(InputAction.CallbackContext ctx) => isAiming = false;
+
+    private void MoveCam(InputAction.CallbackContext ctx)
+    {
+        float mouseX = ctx.ReadValue<Vector2>().x;
+        float mouseY = ctx.ReadValue<Vector2>().y;
+
+        Vector3 yRotation = new Vector3(0, mouseY * Time.deltaTime * camSpeed, 0);
+
+        playerCam.transform.position += -yRotation;
+
+        // Clamp the camera's y position between -1.5f and 1.5f
+        Vector3 clampedPosition = playerCam.transform.position;
+        clampedPosition.y = Mathf.Clamp(clampedPosition.y, 0f, 5f);
+
+        // Set the clamped position back to the camera
+        playerCam.transform.position = clampedPosition;
+        transform.Rotate(new Vector3(0, mouseX * Time.deltaTime * camSpeed, 0));
+    }
 }
